@@ -1,6 +1,10 @@
 # MODULES
 # =================================
+import math
+import numpy as np
+
 from json import loads
+from pprint import pprint
 # =================================
 
 # VARIANT 5
@@ -16,6 +20,7 @@ class Program:
         # Initialized graphs from file
         with open("graph.json") as f:
             self.graph = loads(f.read())
+        self.m = len(self.graph.keys())
         self.point_c    = 0
         self.edge_c     = 0
 
@@ -28,91 +33,176 @@ class Program:
         X = x
         Y = y
 
-    def method_Kraskala(self):
-        # Метод Краскала
-        # Метод определения МОД алгоритмом Краскала (метод, возвращает список ребер МОД)
-        raise NotImplementedError
-    
-    def method_Prima(self):
-        # Метод Прима
-        # Метод определения МОД алгоритмом Прима (метод возвращает список ребер МОД)
-        raise NotImplementedError
+    def Prim(self):
+        def get_min(R, U):
+            rm = (math.inf, -1, -1)
+            for v in U:
+                rr = min(R, key=lambda x: x[0] if (x[1] == v or x[2] == v) and (x[1] not in U or x[2] not in U) else math.inf)
+                if rm[0] > rr[0]:
+                    rm = rr
 
-    def matrix_of_lengths_graph():
-        # Матриця дллин ребер полносвязного графа
-        raise NotImplementedError
+            return rm
+        
+        graph = self.graph
 
-    def gen_graph(n, m):
-        # Метод генерации случайного связного графа на n веришнах и m ребрах
-        raise NotImplementedError
+        # список ребер графа (длина, вершина 1, вершина 2)
+        R = []
+        for key in graph.keys():
+            for point in graph[key].keys():
+                R.append((int(graph[key][point]), int(key), int(point)))
 
-    def matrix_len_edges():
-        # Матриця длин ребер сгенерированого графа
-        raise NotImplementedError
-    
-    def matrix_contiguity_of_graph():
-        # Матриця смежности графа (или/и) любая другая структура для представления графа
-        raise NotImplementedError
-    
-    def queue_by_priority_of_len_gen_graphs():
-        # Очередь по приоритетам длин ребер сгенерированного графа (простейший вариант) - возвращает из оставшихся ребер ребро минимальной длиньі
-        raise NotImplementedError
-    
-    def info_about_graph():
-        # Метод, вьіводящий информацию о графе - число вершин, число ребер, матрица длин ребер, матрица смежности, матрица списка ребер и т.д.
-        raise NotImplementedError
-    
-    def check_contiguity():
-        # Метод проверки связности графа
-        raise NotImplementedError
+        print("Метод прима (МОД)")
 
-    def is_cyclicity():
-        # Метод проверки ацикличности графа
-        raise NotImplementedError
-    
-    def define_secured_inserted_edge_for_Kraskala():
-        # Метод определения безопасности вставляемого ребра для алгоритма Краскала
-        raise NotImplementedError
-    
-    def define_secured_inserted_edge_for_Prima():
-        # Метод определения безопасности вставляемого ребра для алгоритма Прима
-        raise NotImplementedError
-    
-    def define_length_MOD_based_on_a_list_of_edges_of_MOD():
-        # Метод определения длиньі МОД на основании списка ребер МОД
-        raise NotImplementedError
+        N = 7     # число вершин в графе
+        U = {1}   # множество соединенных вершин
+        T = []    # список ребер остова
 
-    def info_about_MOD():
-        # Метод, вьіводящий информацию о МОД - число вершин, список ребер МОД, список длин ребер МОД. длина МОД
-        raise NotImplementedError
+        while len(U) < N:
+            r = get_min(R, U)       # ребро с минимальным весом
+            if r[0] == math.inf:    # если ребер нет, то остов построен
+                break
+
+            T.append(r)             # добавляем ребро в остов
+            U.add(r[1])             # добавляем вершины в множество U
+            U.add(r[2])
+
+        print(T)
+
+    def Kraskala(self):
+        print("Метод Краскала (МОД)")
+        graph = self.graph
+        R = []
+
+        for key in graph.keys():
+            for point in graph[key].keys():
+                R.append((int(graph[key][point]), int(key), int(point)))
+
+        Rs = sorted(R, key=lambda x: x[0])
+        U = set()   # список соединенных вершин
+        D = {}      # словарь списка изолированных групп вершин
+        T = []      # список ребер остова
+
+        for r in Rs:
+            if r[1] not in U or r[2] not in U:  # проверка для исключения циклов в остове
+                if r[1] not in U and r[2] not in U: # если обе вершины не соединены, то
+                    D[r[1]] = [r[1], r[2]]          # формируем в словаре ключ с номерами вершин
+                    D[r[2]] = D[r[1]]               # и связываем их с одним и тем же списком вершин
+                else:                           # иначе
+                    if not D.get(r[1]):             # если в словаре нет первой вершины, то
+                        D[r[2]].append(r[1])        # добавляем в список первую вершину
+                        D[r[1]] = D[r[2]]           # и добавляем ключ с номером первой вершины
+                    else:
+                        D[r[1]].append(r[2])        # иначе, все то же самое делаем со второй вершиной
+                        D[r[2]] = D[r[1]]
+
+                T.append(r)             # добавляем ребро в остов
+                U.add(r[1])             # добавляем вершины в множество U
+                U.add(r[2])
+
+        for r in Rs:    # проходим по ребрам второй раз и объединяем разрозненные группы вершин
+            if r[2] not in D[r[1]]:     # если вершины принадлежат разным группам, то объединяем
+                T.append(r)             # добавляем ребро в остов
+                gr1 = D[r[1]]
+                D[r[1]] += D[r[2]]      # объединем списки двух групп вершин
+                D[r[2]] += gr1
+
+        print(T)
+
+    def printGraph(self):
+        graph = self.graph
+        pprint(graph)
+
+    def TableOfContiguity(self):
+        graph = self.graph
+        m     = self.m
+        print("Матриця суміжності: ")
+        matrix = np.zeros(shape=(m,m))
+        for i in range(1, m+1):
+            for j in range(1, m+1):
+                if graph[str(j)].get(str(i), 0):
+                    matrix[i-1][j-1] = 1
+                else:
+                    matrix[i-1][j-1] = 0
+        print(matrix)
+        print()
+
+    def TableOfLengthes(self):
+        graph = self.graph
+        m     = self.m
+        print("Матриця довжин: ")
+        matrix = np.zeros(shape=(m,m))
+        for i in range(1, m+1):
+            for j in range(1, m+1):
+                a = graph[str(j)].get(str(i), 0)
+                t = 0
+                if i == j:
+                    t = 0
+                elif a:
+                    t = a
+                else:
+                    t = np.Infinity
+                matrix[i-1][j-1] = t
+        print(matrix)
+        print()
+
+    def TableOfIncidence(self):
+        graph = self.graph
+        m     = self.m
+        a = [list(x.values()) for x in graph.values()]
+        b = []
+        for x in a: b += x
+
+        lenMax = max(b)
+
+        matrix = np.zeros(shape=(m,lenMax))
+
+        for i in range(1,m+1):
+            a = graph[str(i)].values()
+            for j in a:
+                matrix[i-1][j-1] = j
+        
+        print("Матриця інцидентності")
+        print(matrix)
+        print()
+
+    def InChecked(self, edge, checked):
+        if edge in checked or edge[::-1] in checked:
+            return True
+        return False
+
+    def EdgesAndLengthes(self):
+        graph = self.graph
+        m     = self.m
+        print("Ребра та їх довжини")
+
+        checked = []
+
+        for point in graph.keys():
+            for key in graph[point].keys():
+                edge = point + str(key)
+
+                if not self.InChecked(edge, checked):
+                    print("%s = %d" % (edge, graph[point][key]), end=" ")
+                    checked.append(edge)
+
+        print("\n")
+
+    def GraphInfo(self):
+        self.printGraph()
+        self.TableOfContiguity()
+        self.TableOfLengthes()
+        self.TableOfIncidence()
+        self.EdgesAndLengthes()
 
 
-def menu():
-    print("""Menu
-0. Menu
-1. Method Kraskala
-2. Method Prima 
-3. Exit
-""")
+
     
 
 m = Program()
 
-exit()
-op = 0
-while True:
-    match op:
-        case 0:
-            menu()
-        case 1:
-            m.method_Kraskala()
-        case 2:
-            m.method_Prima()
-        case 3:
-            exit()
-        case _:
-            print("[-] Invalid operations")
-    op = int(input("[OP] >> "))
+m.GraphInfo()
+m.Prim()
+m.Kraskala()
 
 
 
